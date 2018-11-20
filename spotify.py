@@ -14,20 +14,25 @@ import numpy as np
 import pandas
 from sklearn.neural_network import MLPClassifier
 
-# Creates a CSV file with songs I like and dislike for later use
-def create_csv():
+def get_token():
     username = 'ferminamc'
     scope = 'user-library-read'
     client_id = SPOTIPY_CLIENT_ID
     client_secret = SPOTIPY_CLIENT_SECRET
     redirect_uri = SPOTIPY_REDIRECT_URI
-
     # Get access token and delete cache in case it fails
     try:
         token = util.prompt_for_user_token(username,scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
     except:
         os.remove(f".cache-{username}")
         token = util.prompt_for_user_token(username,scope,client_id=client_id,client_secret=client_secret,redirect_uri=redirect_uri)
+
+    return token
+
+# Creates a CSV file with songs I like and dislike for later use
+def get_train_data():
+    token = get_token()
+    username = 'ferminamc'
 
     col_names = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness', 'liked']
     train_data = []
@@ -76,12 +81,36 @@ def create_csv():
     else:
         print("Can't get token for", username)
 
-    pprint.pprint(train_data)
-
     with open('train_data.csv', 'w', newline='') as csvfile:
         write_csv = csv.writer(csvfile)
         write_csv.writerow(train_data[0])
         for row in train_data[1:]:
             write_csv.writerow(row)
 
-#create_csv()
+def get_test_data():
+    username = 'ferminamc'
+    token = get_token()
+    col_names = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness']
+    test_data = []
+    test_data.append(col_names)
+
+    if token:
+        sp = spotipy.Spotify(auth=token)
+        weekly_recommendation_user = 'spotify'
+        weekly_recommendation_playlist = '37i9dQZEVXcO15uASmzVtt'
+        results = sp.user_playlist(weekly_recommendation_user, weekly_recommendation_playlist)
+        for item in results['tracks']['items']:
+            temp_data = []
+            track_id = item['track']['id']
+            track_features = sp.audio_features(track_id)
+            for col in col_names[0:-1]:
+                temp_data.append(track_features[0][col])
+            test_data.append(temp_data)
+    else:
+        print("Can't get token for", username)
+
+    with open('test_data.csv', 'w', newline='') as csvfile:
+        write_csv = csv.writer(csvfile)
+        write_csv.writerow(test_data[0])
+        for row in test_data[1:]:
+            write_csv.writerow(row)
