@@ -114,3 +114,34 @@ def get_test_data():
         write_csv.writerow(test_data[0])
         for row in test_data[1:]:
             write_csv.writerow(row)
+
+# This will download data of songs I don't like. In this case, J-Pop
+def get_negative_data():
+    username = 'ferminamc'
+    token = get_token()
+    col_names = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness', 'loudness', 'speechiness']
+    test_data = []
+    test_data.append(col_names)
+
+    if token:
+        sp = spotipy.Spotify(auth=token)
+        j_pop_user = 'spotify'
+        j_pop_playlist = '37i9dQZF1DXafb0IuPwJyF'
+        results = sp.user_playlist(j_pop_user, j_pop_playlist)
+        for item in results['tracks']['items']:
+            temp_data = []
+            track_id = item['track']['id']
+            track_features = sp.audio_features(track_id)
+            for col in col_names[0:-1]:
+                temp_data.append(track_features[0][col])
+            test_data.append(temp_data)
+    else:
+        print("Can't get token for", username)
+
+    with open('neg_test_data.csv', 'w', newline='') as csvfile:
+        write_csv = csv.writer(csvfile)
+        write_csv.writerow(test_data[0])
+        for row in test_data[1:]:
+            write_csv.writerow(row)
+
+get_negative_data()
