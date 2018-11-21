@@ -143,5 +143,3 @@ def get_negative_data():
         write_csv.writerow(test_data[0])
         for row in test_data[1:]:
             write_csv.writerow(row)
-
-get_negative_data()
